@@ -3,20 +3,19 @@ import re
 import subprocess
 import html
 import shlex
-from .localizer import Localizer
+from core import Localizer
 from PyQt6 import QtWidgets, uic, QtCore, QtGui
-from .helpers import resource_path, DateTableWidgetItem, RichTextDelegate
-from .app_picker_dialog import AppPickerDialog
-from .search_worker import SearchWorker
+from core.helpers import resource_path, DateTableWidgetItem, RichTextDelegate, AppPickerDialog
+from core.search_worker import SearchWorker
 
-class GrepGuiApp(QtWidgets.QMainWindow):
+class GUI(QtWidgets.QMainWindow):
     """ Main GUI Application Class """
     def __init__(self, locale):
         super().__init__()
 
         # Load UI from file
-        uic.loadUi(resource_path("window.ui"), self)
-        self.setWindowIcon(QtGui.QIcon(resource_path('../icon.svg')))
+        uic.loadUi(resource_path("../ui/window.ui"), self)
+        self.setWindowIcon(QtGui.QIcon(resource_path('../../assets/icon.svg')))
 
         # Replace default LineEdits with custom ones that select all text on click
         # for field in [self.Path, self.Search_item, self.Search_filename]:
@@ -329,7 +328,7 @@ class GrepGuiApp(QtWidgets.QMainWindow):
             if len(lines) > max_tooltip_lines:
                 div_lines.append(
                     f"<div style='margin-left: 80px; text-indent: -80px;'>"
-                    f"{Localizer.get("lines_hidden")}"
+                    f"{Localizer.get('lines_hidden')}"
                     f"</div>"
                 )
 
