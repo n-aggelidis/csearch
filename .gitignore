@@ -3,7 +3,6 @@ __pycache__/
 .flatpak-builder/
 build-dir/
 repo/
-appimage/
 .idea/
 .vscode/
 *.AppImage
