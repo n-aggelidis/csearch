@@ -1,0 +1,33 @@
+import sys
+import os
+import signal
+from PyQt6 import QtWidgets, QtCore
+
+from core import Localizer
+from core import GrepGuiApp
+
+# Set working directory for PyInstaller to access .ui files
+if hasattr(sys, '_MEIPASS'):
+    os.chdir(sys._MEIPASS)
+
+if __name__ == "__main__":
+    # Allow immediate exit via Ctrl+C in the terminal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    # Initialize application
+    app = QtWidgets.QApplication(sys.argv)
+    app.setProperty("useNativeDialogs", True)
+
+    # Make sure window manager can recognize flatpak
+    if os.path.exists("/.flatpak-info"):
+        app.setApplicationName("org.csearch.CSearch")
+        app.setDesktopFileName("org.csearch.CSearch.desktop")
+
+    # Detect system language and configure localization
+    locale = QtCore.QLocale.system()
+    Localizer.set_language(locale.name())
+
+    # Initialize and show main window
+    window = GrepGuiApp(locale=locale)
+    window.show()
+    sys.exit(app.exec())

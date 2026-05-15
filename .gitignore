@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.flatpak-builder/
+build-dir/
+repo/
+appimage/
+.idea/
+.vscode/
+*.AppImage
+*.flatpak

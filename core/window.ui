@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>950</width>
+    <height>750</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>App Title</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_Main">
+    <item>
+     <widget class="QGroupBox" name="searchGroup">
+
+      <layout class="QGridLayout" name="gridLayout_Inputs">
+       <item row="0" column="0">
+        <widget class="QLabel" name="labelPath">
+         <property name="text"><string>Suchpfad:</string></property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="Path">
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="Browse">
+         <property name="text"><string>Search</string></property>
+        </widget>
+       </item>
+
+       <item row="1" column="0">
+        <widget class="QLabel" name="labelExt">
+         <property name="text"><string>Extension</string></property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="Extensions">
+         <property name="placeholderText"><string>text</string></property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="InfoExt">
+         <property name="text"><string>?</string></property>
+         <property name="toolTip"><string>text</string></property>
+         <property name="maximumWidth"><number>30</number></property>
+        </widget>
+       </item>
+
+       <item row="2" column="0">
+        <widget class="QLabel" name="labelFileName">
+         <property name="text"><string>text</string></property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QComboBox" name="Search_filename">
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QPushButton" name="InfoFileName">
+         <property name="text"><string>?</string></property>
+         <property name="toolTip"><string>text</string></property>
+         <property name="maximumWidth"><number>30</number></property>
+        </widget>
+       </item>
+
+       <item row="3" column="0">
+        <widget class="QLabel" name="labelContent">
+         <property name="text"><string>text</string></property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QComboBox" name="Search_item">
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="QPushButton" name="InfoContent">
+         <property name="text"><string>?</string></property>
+         <property name="toolTip"><string>text</string></property>
+         <property name="maximumWidth"><number>30</number></property>
+        </widget>
+       </item>
+
+       <item row="4" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_Options">
+         <item>
+          <widget class="QCheckBox" name="CheckSubfolders">
+           <property name="text"><string>text</string></property>
+           <property name="checked"><bool>true</bool></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="CheckIgnoreCase">
+           <property name="text"><string>text</string></property>
+           <property name="checked"><bool>true</bool></property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation"><enum>Qt::Horizontal</enum></property>
+           <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item row="4" column="2">
+        <widget class="QPushButton" name="StartSearch">
+         <property name="text"><string>text</string></property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+
+    <item>
+     <widget class="QTableWidget" name="Results">
+      <property name="alternatingRowColors"><bool>true</bool></property>
+      <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+      <column><property name="text"><string>text</string></property></column>
+      <column><property name="text"><string>text</string></property></column>
+      <column><property name="text"><string>text</string></property></column>
+      <column><property name="text"><string>text</string></property></column>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+</ui>

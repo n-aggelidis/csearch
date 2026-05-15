@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=CSearch
+Comment=Dateisuche mit Ripgrep und PDFGrep
+Exec=run.sh
+Icon=org.csearch.CSearch
+Categories=Utility;Development;
+Terminal=false
+StartupWMClass=org.csearch.CSearch
