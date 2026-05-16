@@ -14,7 +14,7 @@ class GUI(QtWidgets.QMainWindow):
         super().__init__()
 
         # Load UI from file
-        uic.loadUi(resource_path("../ui/window.ui"), self)
+        uic.loadUi(resource_path("window.ui"), self)
         self.setWindowIcon(QtGui.QIcon(resource_path('../../assets/icon.svg')))
 
         # Replace default LineEdits with custom ones that select all text on click

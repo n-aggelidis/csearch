@@ -1,5 +1,6 @@
 import sys
 import os
+import inspect
 
 from PyQt6 import QtWidgets, QtCore, QtGui
 from .localizer import Localizer
@@ -10,8 +11,9 @@ def resource_path(relative_path):
         # Use temp folder if running as AppImage/PyInstaller
         # PyInstaller flattens paths to root, so we extract only the filename
         return os.path.join(sys._MEIPASS, os.path.basename(relative_path))
-    # Otherwise use local folder
-    base_path = os.path.dirname(os.path.abspath(__file__))
+    # Otherwise use local folder of the calling script
+    caller_filename = inspect.stack()[1].filename
+    base_path = os.path.dirname(os.path.abspath(caller_filename))
     return os.path.join(base_path, relative_path)
 
 class SelectAllLineEdit(QtWidgets.QLineEdit):
