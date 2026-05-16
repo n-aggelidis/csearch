@@ -114,10 +114,11 @@ modules:
     buildsystem: simple
     build-commands:
       - mkdir -p /app/bin/core
-      - cp -r core/* /app/bin/core/
-      - install -D main.py /app/bin/main.py
-      - install -D icon.svg /app/bin/icon.svg
-      - install -D icon.svg /app/share/icons/hicolor/scalable/apps/org.csearch.CSearch.svg
+      - cp -r src/core/* /app/bin/core/
+      - cp -r src/ui/* /app/bin/core/
+      - install -D src/main.py /app/bin/main.py
+      - install -D assets/icon.svg /app/bin/icon.svg
+      - install -D assets/icon.svg /app/share/icons/hicolor/scalable/apps/org.csearch.CSearch.svg
       - install -D flatpak/run.sh /app/bin/run.sh
       - install -D flatpak/org.csearch.CSearch.desktop /app/share/applications/org.csearch.CSearch.desktop
     sources:
