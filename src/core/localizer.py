@@ -35,7 +35,7 @@ class Localizer:
             "de": "Begriff1, Begriff2, ..."
         },
         "filename_tooltip": {
-            "en": "Separate multiple words with commas. File that contain ALL words will be found.\n"+
+            "en": "Separate multiple words with commas. Files that contain ALL words will be found.\n"+
                   "Order of words is disregarded.",
             "de": "Mehrere Wörter mit Komma trennen. Dateien, die ALLE Wörter enthalten, werden gefunden.\n"+
                     "Reihenfolge der Wörter wird nicht berücksichtigt."
