@@ -12,8 +12,8 @@ CSearch uses `ripgrep-all` (`rga`) for all generic file types, `pdfgrep` for PDF
 
 - **Multiple Search Terms**: Multiple search terms can be entered for the filename and file content. It finds all documents containing all search terms, regardless of their order.
 - **Broad Format Support:**
+  - **Office Documents:** Native, low-RAM, and parallelized search (multithreading) in `.odt` and `.docx` files using the Python `zipfile` module. This enables the search of text that is in the header or footer or some text fields of the documents, which tools like `odt2txt` for example do not support.
   - **PDFs:** Exact page numbers and context output thanks to `pdfgrep`. When opened, the PDF viewer jumps directly to the matched page.
-  - **Office Documents:** Native, low-RAM, and parallelized search (multithreading) in `.odt` and `.docx` files using the Python `zipfile` module.
   - **Other Formats:** Source code, log files, archives, E-Books, etc. (everything supported by `ripgrep-all`).
 - **Clear Results Table:** Displays the filename, relative folder path, modification date, and a formatted text snippet with the highlighted search term.
 - **Smart Context Menu:**
@@ -72,8 +72,8 @@ CSearch nutzt `ripgrep-all` (`rga`) für alle generischen Dateitypen, `pdfgrep` 
 
 - **Mehrere Suchbegriffe**: Für den Dateinamen und Dateiinhalt können mehrere Suchbegriffe eingegeben werden. Es werden alle Dokumente gefunden, die alle Suchbegriffe enthalten, wobei die Reihenfolge unerheblich ist.
 - **Breite Formatunterstützung:**
+  - **Office-Dokumente:** Native, RAM-schonende und parallelisierte Suche (Multithreading) in `.odt` und `.docx` Dateien mithilfe des Python `zipfile`-Moduls. Dies ermöglicht die Suche in der Kopf- und Fußzeile und manchen Textfeldern des Dokuments, die mit Werkzeugen wie `odt2txt` nicht gefunden werden. 
   - **PDFs:** Exakte Seitenzahlen und Kontext-Ausgabe dank `pdfgrep`. Beim Öffnen springt der PDF-Viewer direkt zur Treffer-Seite.
-  - **Office-Dokumente:** Native, RAM-schonende und parallelisierte Suche (Multithreading) in `.odt` und `.docx` Dateien mithilfe des Python `zipfile`-Moduls.
   - **Weitere Formate:** Quellcode, Logfiles, Archive, E-Books etc. (alles, was `ripgrep-all` unterstützt).
 - **Übersichtliche Ergebnis-Tabelle:** Zeigt den Dateinamen, den relativen Ordnerpfad, das Änderungsdatum und einen formatierten Text-Ausschnitt mit dem gefundenen Suchwort.
 - **Smartes Kontext-Menü:**
