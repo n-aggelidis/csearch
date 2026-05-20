@@ -25,7 +25,7 @@ CSearch uses `ripgrep-all` (`rga`) for all generic file types, `pdfgrep` for PDF
 - **Localization:** Automatic language detection (German / English).
 
 
-![CSearch Screenshot](https://github.com/n-aggelidis/csearch/blob/main/assets/CSearch.png?raw=true)
+![CSearch Screenshot](https://github.com/n-aggelidis/csearch/blob/main/assets/CSearch_en.png?raw=true)
 
 ### Installation & Usage
 
@@ -84,7 +84,7 @@ CSearch nutzt `ripgrep-all` (`rga`) für alle generischen Dateitypen, `pdfgrep` 
 - **Lokalisierung:** Automatische Spracherkennung (Deutsch / Englisch).
 
 
-![CSearch Screenshot](https://github.com/n-aggelidis/csearch/blob/main/assets/CSearch.png?raw=true)
+![CSearch Screenshot](https://github.com/n-aggelidis/csearch/blob/main/assets/CSearch_de.png?raw=true)
 
 ###  Installation & Start
 
