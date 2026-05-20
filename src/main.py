@@ -1,3 +1,5 @@
+__version__ = "0.1"
+
 import sys
 import os
 import signal
@@ -21,13 +23,13 @@ if __name__ == "__main__":
     # Make sure window manager can recognize flatpak
     if os.path.exists("/.flatpak-info"):
         app.setApplicationName("org.csearch.CSearch")
-        app.setDesktopFileName("org.csearch.CSearch.desktop")
+        app.setDesktopFileName("org.csearch.CSearch")
 
     # Detect system language and configure localization
     locale = QtCore.QLocale.system()
     Localizer.set_language(locale.name())
 
     # Initialize and show main window
-    window = GUI(locale=locale)
+    window = GUI(locale=locale, version=__version__)
     window.show()
     sys.exit(app.exec())

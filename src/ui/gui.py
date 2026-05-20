@@ -10,8 +10,10 @@ from core.search_worker import SearchWorker
 
 class GUI(QtWidgets.QMainWindow):
     """ Main GUI Application Class """
-    def __init__(self, locale):
+    def __init__(self, locale, version):
         super().__init__()
+
+        self.version = version
 
         # Load UI from file
         uic.loadUi(resource_path("window.ui"), self)
@@ -60,6 +62,7 @@ class GUI(QtWidgets.QMainWindow):
         self.InfoFileName.clicked.connect(self.show_button_info)
         self.InfoContent.clicked.connect(self.show_button_info)
         self.StartSearch.clicked.connect(self.toggle_search)
+        self.Extensions.returnPressed.connect(self.toggle_search)
         for field in [self.Path, self.Search_item, self.Search_filename]:
             if field.lineEdit():
                 field.lineEdit().returnPressed.connect(self.toggle_search)
@@ -73,6 +76,17 @@ class GUI(QtWidgets.QMainWindow):
         self.animation_timer = QtCore.QTimer()
         self.animation_timer.timeout.connect(self.animate_status)
         self.worker = None
+
+        # Add version number to the bottom right of the status bar
+        self.version_label = QtWidgets.QLabel(f"v{self.version}")
+        self.version_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.version_label.setStyleSheet("color: gray; padding-right: 2px;")
+        
+        # Entfernt den unsichtbaren Rahmen und das Platz wegnehmende Dreieck unten rechts
+        self.statusbar.setStyleSheet("QStatusBar::item { border: none; }")
+        self.statusbar.setSizeGripEnabled(False)
+        
+        self.statusbar.addPermanentWidget(self.version_label)
 
     def retranslate_ui(self):
         """ Translates UI elements based on the current locale """
@@ -161,6 +175,10 @@ class GUI(QtWidgets.QMainWindow):
                 clean_cmd = re.sub(r'%[fFuU]', '', cmd).strip()
                 args = shlex.split(clean_cmd)
                 args.append(file_path)
+                
+                # Im Flatpak müssen wir die Ausführung an das Host-System weiterreichen
+                if os.path.exists("/.flatpak-info"):
+                    args = ["flatpak-spawn", "--host"] + args
 
                 try:
                     subprocess.Popen(args)
@@ -172,7 +190,7 @@ class GUI(QtWidgets.QMainWindow):
         folders = set(os.path.dirname(p) for p in paths)
         for f in folders:
             if os.path.exists(f):
-                QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(f))
+                self._open_path_native(f)
 
     def _handle_multi_open(self, paths):
         """ Opens multiple files with a warning prompt if there are too many """
@@ -185,7 +203,7 @@ class GUI(QtWidgets.QMainWindow):
                 return
         for p in paths:
             if os.path.exists(p):
-                QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(p))
+                self._open_path_native(p)
 
     def open_dir(self):
         """ Opens a directory selection dialog """
@@ -348,15 +366,20 @@ class GUI(QtWidgets.QMainWindow):
             page_no = item.data(QtCore.Qt.ItemDataRole.UserRole + 1)
 
             if file_path and os.path.exists(file_path):
-                url = QtCore.QUrl.fromLocalFile(file_path)
-
-                # Append page fragment for PDFs
-                if file_path.lower().endswith('.pdf') and page_no:
-                    url.setFragment(f"page={page_no}")
-
-                QtGui.QDesktopServices.openUrl(url)
+                self._open_path_native(file_path, page_no)
             else:
                 QtWidgets.QMessageBox.warning(self, Localizer.get("error"), Localizer.get("file_not_found"))
+
+    def _open_path_native(self, file_path, page_no=None):
+        """ Helper to reliably open a file or folder on the host system """
+        url = QtCore.QUrl.fromLocalFile(file_path)
+        if file_path.lower().endswith('.pdf') and page_no:
+            url.setFragment(f"page={page_no}")
+            
+        if os.path.exists("/.flatpak-info"):
+            subprocess.Popen(["flatpak-spawn", "--host", "xdg-open", url.toString()])
+        else:
+            QtGui.QDesktopServices.openUrl(url)
 
     def _load_history(self, combo_box, settings_key, set_active=True):
         """ Loads history into a combobox from QSettings """
