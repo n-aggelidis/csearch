@@ -5,6 +5,7 @@ import subprocess
 import html
 import signal
 import zipfile
+import concurrent.futures
 from PyQt6 import QtCore
 
 from .localizer import Localizer
@@ -20,19 +21,24 @@ class SearchWorker(QtCore.QThread):
         self.params = params
         self.is_cancelled = False
         self.active_process = None
+        self.active_executor = None
 
     def cancel(self):
         self.is_cancelled = True
         if self.active_process:
             try:
-                # Terminate entire process group
-                os.killpg(os.getpgid(self.active_process.pid), signal.SIGTERM)
+                # Terminate entire process group using the process PID as PGID 
+                # (requires start_new_session=True in Popen)
+                os.killpg(self.active_process.pid, signal.SIGTERM)
             except ProcessLookupError:
                 pass  # Process already dead
             except Exception as e:
                 # Fallback if process groups are unsupported
                 print(f"Warning while terminating process group: {e}")
                 self.active_process.terminate()
+                
+        if self.active_executor:
+            self.active_executor.shutdown(wait=False, cancel_futures=True)
 
     def filter_files(self, base_cmd, files, terms):
         current_files = files
@@ -47,12 +53,14 @@ class SearchWorker(QtCore.QThread):
                 if self.params['ignore_case']: cmd.append("-i")
                 cmd.extend(["--", term])
                 cmd.extend(chunk)
-                res = subprocess.run(
-                    cmd, capture_output=True, text=True, errors='replace',
-                    start_new_session=True
+                self.active_process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                    text=True, errors='replace', start_new_session=True
                 )
-                if res.stdout:
-                    lines = [line.strip() for line in res.stdout.strip().split('\n') if line.strip()]
+                stdout, _ = self.active_process.communicate()
+                if self.is_cancelled: break
+                if stdout:
+                    lines = [line.strip() for line in stdout.strip().split('\n') if line.strip()]
                     next_files.extend(lines)
             current_files = next_files
         return current_files
@@ -232,25 +240,20 @@ class SearchWorker(QtCore.QThread):
         """ Searches text within ODT or DOCX files natively """
         flags = re.IGNORECASE if self.params['ignore_case'] else 0
         pattern = re.compile(regex, flags)
+        pfx = Localizer.get("line")
 
-        for filepath in file_list:
-            if self.is_cancelled: break
-
+        def process_file(filepath):
+            if self.is_cancelled: return None
             clean_text = self.get_clean_zip_text(filepath, file_type)
-            if not clean_text: continue
+            if not clean_text: return None
 
             lines = clean_text.split('\n')
             all_match_lines = []
             full_context_buffer = []
 
             # Find line numbers containing matches
-            match_indices = []
-            for i, line in enumerate(lines):
-                if pattern.search(line):
-                    match_indices.append(i)
-
-            if not match_indices:
-                continue
+            match_indices = [i for i, line in enumerate(lines) if pattern.search(line)]
+            if not match_indices: return None
 
             # Collect matches for table view
             for i in match_indices:
@@ -258,8 +261,6 @@ class SearchWorker(QtCore.QThread):
 
             # Build context tooltip (simulates -C 8 of rg)
             last_printed = -1
-            pfx = Localizer.get("line")
-
             for i in match_indices:
                 start = max(0, i - 8)
                 end = min(len(lines), i + 9)
@@ -283,38 +284,72 @@ class SearchWorker(QtCore.QThread):
                 last_printed = end - 1
 
             # Send to GUI
-            if all_match_lines:
-                fn, frel, mod = self.get_file_meta(filepath)
-                table_text = " | ".join(all_match_lines)
-                tooltip_text = "\n".join(full_context_buffer)
-                self.match_found_signal.emit(filepath, fn, frel, mod, table_text, tooltip_text, 1)
+            fn, frel, mod = self.get_file_meta(filepath)
+            table_text = " | ".join(all_match_lines)
+            tooltip_text = "\n".join(full_context_buffer)
+            return filepath, fn, frel, mod, table_text, tooltip_text, 1
+
+        self.active_executor = concurrent.futures.ThreadPoolExecutor()
+        futures = [self.active_executor.submit(process_file, fp) for fp in file_list]
+        for future in concurrent.futures.as_completed(futures):
+            if self.is_cancelled: break
+            try:
+                res = future.result()
+                if res:
+                    self.match_found_signal.emit(*res)
+            except concurrent.futures.CancelledError:
+                break
+        self.active_executor.shutdown(wait=False)
 
     def filter_odt_files(self, file_list, terms):
         """ Fast pre-filtering entirely in RAM """
         valid_files = []
-        for filepath in file_list:
-            if self.is_cancelled: break
 
+        def check_file(filepath):
+            if self.is_cancelled: return None
             content = self.get_clean_zip_text(filepath, "odt")
-            if not content: continue
-
+            if not content: return None
             if self.params['ignore_case']:
                 content = content.lower()
-
             # Check if all search terms are present
             if all((t.lower() if self.params['ignore_case'] else t) in content for t in terms):
-                valid_files.append(filepath)
+                return filepath
+            return None
+
+        self.active_executor = concurrent.futures.ThreadPoolExecutor()
+        futures = [self.active_executor.submit(check_file, fp) for fp in file_list]
+        for future in concurrent.futures.as_completed(futures):
+            if self.is_cancelled: break
+            try:
+                res = future.result()
+                if res: valid_files.append(res)
+            except concurrent.futures.CancelledError:
+                break
+        self.active_executor.shutdown(wait=False)
         return valid_files
 
 
     def filter_docx_files(self, file_list, terms):
         """ Fast pre-filtering entirely in RAM """
         valid_files = []
-        for filepath in file_list:
-            if self.is_cancelled: break
+
+        def check_file(filepath):
+            if self.is_cancelled: return None
             content = self.get_clean_zip_text(filepath, "docx")
-            if not content: continue
+            if not content: return None
             if self.params['ignore_case']: content = content.lower()
             if all((t.lower() if self.params['ignore_case'] else t) in content for t in terms):
-                valid_files.append(filepath)
+                return filepath
+            return None
+
+        self.active_executor = concurrent.futures.ThreadPoolExecutor()
+        futures = [self.active_executor.submit(check_file, fp) for fp in file_list]
+        for future in concurrent.futures.as_completed(futures):
+            if self.is_cancelled: break
+            try:
+                res = future.result()
+                if res: valid_files.append(res)
+            except concurrent.futures.CancelledError:
+                break
+        self.active_executor.shutdown(wait=False)
         return valid_files
