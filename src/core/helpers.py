@@ -2,6 +2,8 @@ import sys
 import os
 import inspect
 
+import re
+import html
 from PyQt6 import QtWidgets, QtCore, QtGui
 from .localizer import Localizer
 
@@ -37,36 +39,61 @@ class DateTableWidgetItem(QtWidgets.QTableWidgetItem):
 class RichTextDelegate(QtWidgets.QStyledItemDelegate):
     """ Delegate to render HTML (e.g. bold text) in table cells. """
     def paint(self, painter, option, index):
-        text = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
-        if not text:
-            super().paint(painter, option, index)
-            return
-
+        # 1. Let the base class draw the background, focus rectangle, etc.
+        # This is the most robust way to handle selection styles correctly.
         options = QtWidgets.QStyleOptionViewItem(option)
         self.initStyleOption(options, index)
-
+        
         painter.save()
 
-        doc = QtGui.QTextDocument()
-        doc.setDefaultFont(options.font)
-        doc.setDocumentMargin(0)
-        doc.setHtml(text)
-
-        # Draw background (e.g. selection) without plain text
+        # The text contains HTML, so we clear it from the options to prevent
+        # the base class from drawing the raw HTML string.
+        text = options.text
         options.text = ""
-        options.widget.style().drawControl(QtWidgets.QStyle.ControlElement.CE_ItemViewItem, options, painter)
+        style = options.widget.style()
+        style.drawControl(QtWidgets.QStyle.ControlElement.CE_ItemViewItem, options, painter)
 
-        # Indent text area slightly
-        painter.translate(options.rect.left() + 4, options.rect.top() + 4)
-        clip = QtCore.QRectF(0, 0, options.rect.width() - 8, options.rect.height() - 8)
+        if not text:
+            painter.restore()
+            return
 
-        # Change HTML text color to white when row is selected
-        ctx = QtGui.QAbstractTextDocumentLayout.PaintContext()
-        ctx.clip = clip
-        if option.state & QtWidgets.QStyle.StateFlag.State_Selected:
-            ctx.palette.setColor(QtGui.QPalette.ColorRole.Text, option.palette.color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.HighlightedText))
+        # 2. Prepare fonts and colors
+        normal_font = options.font
+        bold_font = QtGui.QFont(normal_font)
+        bold_font.setBold(True)
 
-        doc.documentLayout().draw(painter, ctx)
+        # 3. Prepare the drawing rectangle with padding
+        text_rect = style.subElementRect(QtWidgets.QStyle.SubElement.SE_ItemViewItemText, options)
+
+        # 4. Parse the simple HTML and draw segment by segment
+        parts = re.split(r'(<b>.*?</b>)', text)
+        x = text_rect.left()
+        elide_mode = QtCore.Qt.TextElideMode.ElideRight
+
+        for part in parts:
+            if not part:
+                continue
+            
+            is_bold = part.startswith('<b>') and part.endswith('</b>')
+            
+            segment_text = html.unescape(part[3:-4] if is_bold else part)
+            current_font = bold_font if is_bold else normal_font
+            
+            painter.setFont(current_font)
+            font_metrics = QtGui.QFontMetrics(current_font)
+
+            remaining_width = options.rect.right() - x
+            elided_text = font_metrics.elidedText(segment_text, elide_mode, remaining_width)
+
+            painter.drawText(x, text_rect.top(), remaining_width, text_rect.height(), 
+                             QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter | QtCore.Qt.TextFlag.TextSingleLine, 
+                             elided_text)
+            
+            x += font_metrics.horizontalAdvance(elided_text)
+
+            if elided_text != segment_text:
+                break
+
         painter.restore()
 
 class AppPickerDialog(QtWidgets.QDialog):
@@ -101,8 +128,23 @@ class AppPickerDialog(QtWidgets.QDialog):
 
     def load_desktop_files(self):
         """ Scans Linux system directories for installed GUI applications """
-        # NixOS and other Linux distributions use XDG_DATA_DIRS to store app paths
-        xdg_dirs = os.environ.get("XDG_DATA_DIRS", "/usr/share").split(":")
+        if os.path.exists("/.flatpak-info"):
+            # Im Flatpak ist das Host-Dateisystem unter /run/host gemountet.
+            # Wir scannen hier auch die Ordner für Flatpak- und Snap-Apps auf dem Host!
+            xdg_dirs = [
+                "/run/host/usr/share",
+                "/run/host/usr/local/share",
+                "/run/host/var/lib/flatpak/exports/share",
+                #"/run/host/var/lib/snapd/desktop"
+            ]
+        else:
+            # NixOS and other Linux distributions use XDG_DATA_DIRS to store app paths
+            xdg_dirs = os.environ.get("XDG_DATA_DIRS", "/usr/share").split(":")
+            xdg_dirs.append("/var/lib/flatpak/exports/share")
+            #xdg_dirs.append("/var/lib/snapd/desktop")
+
+        # User-spezifische App-Ordner (für Flatpak und Non-Flatpak gleich)
+        xdg_dirs.append(os.path.expanduser("~/.local/share/flatpak/exports/share"))
         xdg_dirs.append(os.path.expanduser("~/.local/share"))
 
         for d in xdg_dirs:
@@ -141,6 +183,9 @@ class AppPickerDialog(QtWidgets.QDialog):
                         elif line.startswith("Exec=") and not exec_cmd:
                             exec_cmd = line.split("=", 1)[1]
                         elif line.startswith("NoDisplay=true"):
+                            no_display = True
+                        elif line.startswith("Terminal=true"):
+                            # Verstecke reine Terminal-Programme, da wir kein Terminal mitstarten
                             no_display = True
 
             # Include only visible applications with valid commands
