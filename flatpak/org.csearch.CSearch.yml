@@ -14,9 +14,8 @@ finish-args:
   - --share=ipc
 
   # Zugriff auf Dateien
-  - --filesystem=home
+  - --filesystem=host
 
-  # --- INTEGRATIONS-BOOSTER ---
   # Erlaubt den Zugriff auf System-Schriftarten und Icons des Hosts
   - --filesystem=xdg-config/gtk-3.0:ro
   - --filesystem=xdg-config/gtk-4.0:ro
@@ -25,9 +24,11 @@ finish-args:
   # Erlaubt native System-Dialoge (Filepicker etc.) via Portals
   - --talk-name=org.freedesktop.portal.Desktop
   - --talk-name=org.freedesktop.portal.Documents
+  
+  # Zwingend erforderlich, damit "flatpak-spawn --host" (Öffnen mit...) funktioniert!
+  - --talk-name=org.freedesktop.Flatpak
 
   # Verhindert, dass QT ein festes Design erzwingt
-  # Wir lassen das System entscheiden!
   #- --env=QT_QPA_PLATFORMTHEME=kde
 
 modules:
@@ -114,10 +115,11 @@ modules:
     buildsystem: simple
     build-commands:
       - mkdir -p /app/bin/core
+      - mkdir -p /app/bin/ui
       - cp -r src/core/* /app/bin/core/
-      - cp -r src/ui/* /app/bin/core/
+      - cp -r src/ui/* /app/bin/ui/
       - install -D src/main.py /app/bin/main.py
-      - install -D assets/icon.svg /app/bin/icon.svg
+      - install -D assets/icon.svg /app/assets/icon.svg
       - install -D assets/icon.svg /app/share/icons/hicolor/scalable/apps/org.csearch.CSearch.svg
       - install -D flatpak/run.sh /app/bin/run.sh
       - install -D flatpak/org.csearch.CSearch.desktop /app/share/applications/org.csearch.CSearch.desktop
