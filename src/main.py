@@ -27,9 +27,12 @@ if __name__ == "__main__":
 
     # Detect system language and configure localization
     locale = QtCore.QLocale.system()
+    #locale = QtCore.QLocale("de_DE")
+
     Localizer.set_language(locale.name())
 
     # Initialize and show main window
     window = GUI(locale=locale, version=__version__)
+    window.resize(1200, 800)
     window.show()
     sys.exit(app.exec())
